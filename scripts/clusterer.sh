@@ -79,28 +79,6 @@ logt() {
 	log $(date "+%Y-%m-%d %H:%M:%S") $@
 }
 
-# cluster_func performs cluster for a single fa file
-# cluster_func() {
-#     fa_file=$1
-#     ./in_silico_PCR.pl -s $genus/full/$genus.16S \
-#     -a $forw -b $rev -r -m -i \
-#     > $genus/amplicons/$genus-$name.summary \
-#     2> $genus/amplicons/$genus-$name.temp.amplicons
-
-#     seqkit replace --quiet -p "(.+)" -r '{kv}' -k \
-#     $genus/amplicons/$genus-$name.summary \
-#     $genus/amplicons/$genus-$name.temp.amplicons \
-#     > $genus/amplicons/$genus-$name.amplicons
-
-#     rm $genus/amplicons/$genus-$name.summary
-#     rm $genus/amplicons/$genus-$name.temp.amplicons
-
-#     vsearch -cluster_fast $genus/amplicons/$genus-$name.amplicons \
-#     --id $id  -strand both --uc $genus/amplicons/$genus-$name.uc \
-#     --clusters $genus/amplicons/$name-clusters/$genus-$name-clus \
-#     --quiet
-# }
-
 cluster_func() {
     logt -- entering function
     genome=$( basename $1 .gbk )
@@ -160,14 +138,6 @@ else
     logt - Starting cluster in parallel...
     parallel cluster_func ::: $gbk_files
 fi
-
-# logt - Concatenating 16S rRNA sequences into one file...
-# output_files=$( echo $fa_files | sed "s/.fa/.rRNA/gi" )
-# cat $output_files | awk '/16S_rRNA/{print;getline;print;}' > $genome_folder/all_16s.txt
-
-# cat $genome_folder/all_16s.txt | grep "EFB*" | uniq -c > $genome_folder/16s.log
-
-# grep "16S_rRNA" -A 1 | grep -v '--' #> $genome_folder/all_16s.txt
 
 time_end="$(date +%s)"
 time_used=$[ ${time_end} - ${time_start} ]

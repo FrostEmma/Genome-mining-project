@@ -1,2 +1,0 @@
-blastn -db 16S_ribosomal_RNA -query file.file -num_descriptions 5 -num_alignments 1 -out output.file
-blastn -db 16S_ribosomal_RNA/16S_ribosomal_RNA -query nz/data/all_16S-0.80.txt -num_alignments 5 -outfmt '7 qseqid sacc stitle evalue bitscore pident qcovs' -out nz/data/16s_blast_results.txt

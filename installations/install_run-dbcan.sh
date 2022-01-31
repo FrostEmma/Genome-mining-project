@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# 2/10/2021
+
 conda create -n run_dbcan python=3.8 diamond hmmer prodigal -c conda-forge -c bioconda
 conda activate run_dbcan
 

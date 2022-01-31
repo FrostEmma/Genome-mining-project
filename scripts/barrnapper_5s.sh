@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Emma Thinggaard Frost, s173709@student.dtu.dk
-# 2021-10-04
+# 2021-11-01
 
-# Run the program with ./barrnapper_5s.sh in ~/nz/scripts
+# Run the program with ./barrnapper_5s.sh in ~/scripts
 
 # Set help text
 help="
@@ -99,18 +99,20 @@ barrnap_func() {
             iterations=$[ ${iterations} + 1 ]
         done
         logt -- Reconstructing $rna_file
-        acc=$( basename $fa_file .fa )
-        species=$( grep $acc ../data/id_species2.csv | cut -d "," -f 2 | sed "s/ /-/g" )
-        sed -E -i "s/:.*/:$acc/g" $rna_file
+        id=$( basename $fa_file .fa )
+        if [[ -s ../data/id_species.csv ]] ; then # Looks up species in index if provided
+            species=$( grep $id ../data/id_species.csv | cut -d "," -f 2 | sed "s/ /-/g" )
+        fi
+        sed -E -i "s/:.*/:$id/g" $rna_file
         awk '/5S_rRNA/{print;getline;print;}' $rna_file > $rna_5S_file
-        rm $rna_5S_titles
-        count_duplicates=$( cat $rna_5S_file | grep 'EFB' | wc -w )
+        count_duplicates=$( cat $rna_5S_file | grep 'rRNA' | wc -w )
         number=$count_duplicates
         while [[ $number -gt 0 ]] ; do
-            sed -iw "0,/>5S_rRNA:$acc/s//>5SrRNA_$acc-$number\_$species/" $rna_5S_file
+            sed -iw "0,/>5S_rRNA:$id/s//>5SrRNA_$id-$number\_$species/" $rna_5S_file
             number=$[ ${number} - 1 ]
         done
         cat $rna_5S_file
+        rm $rna_5S_titles
         grep "^>" $rna_5S_file | cut -c 2- > $rna_5S_titles
     fi
     if [[ ! -s $rna_5S_file ]] ; then
@@ -152,17 +154,18 @@ logt - Concatenating 5S rRNA sequences into one file...
 output_files=$( echo $fa_files | sed "s/.fa/.5S/gi" )
 cat $output_files > $genome_folder/all_5S-$reject.txt
 
-logt - Creating title file (for meta data file)
-title_files=$( echo $fa_files | sed "s/.fa/.title/gi")
-pretty_title=$( cat $title_files | cut -d "_" -f 2,3 | sed "s/_/ /g" )
-cat $title_files > $genome_folder/title_5S-$reject.txt
-echo $pretty_title > $genome_folder/pretty_title_5S-$reject.txt
-rm $title_files
+# Specific code for my dataset
 
+# logt - Creating title file for meta data file
+# title_files=$( echo $fa_files | sed "s/.fa/.title/gi")
+# pretty_title=$( cat $title_files | cut -d "_" -f 2,3 | sed "s/_/ /g" )
+# cat $title_files > $genome_folder/title_5S-$reject.txt
+# echo $pretty_title > $genome_folder/pretty_title_5S-$reject.txt
+# rm $title_files
 
-cat $genome_folder/all_5S-$reject.txt | grep "EFB*" | cut -d "-" -f 1 | uniq -c > $genome_folder/5S_with$reject.log
-count_5S=$( cat $genome_folder/5S_with$reject.log | wc -l )
-logt -- There are $count_5S genomes with at least one 5S rRNA using threshold = $reject
+cat $genome_folder/all_5S-$reject.txt | grep "rRNA*" | cut -d "-" -f 1 | uniq -c > $genome_folder/5S_with_$reject.log
+count_5S=$( cat $genome_folder/5S_with_$reject.log | wc -l )
+logt - There are $count_5S genomes with at least one 5S rRNA using threshold = $reject
 
 time_end="$(date +%s)"
 time_used=$[ ${time_end} - ${time_start} ]

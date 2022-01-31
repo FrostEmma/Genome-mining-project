@@ -3,7 +3,7 @@
 # Emma Thinggaard Frost, s173709@student.dtu.dk
 # 2021-10-04
 
-# Run the program with ./barrnapper_16_v2.sh in ~/nz/scripts
+# Run the program with ./barrnapper_16s.sh in ~/scripts
 
 # Set help text
 help="
@@ -91,28 +91,30 @@ barrnap_func() {
     if [[ -s $rna_file ]] ; then
         rm $rna_file
     fi
-    if [[ -s $fa_file ]] ; then
-        logt -- Starting barrnap of $fa_file
-        iterations=0
-        while [[ ! -s $rna_file ]] && [[ $iterations -lt 3 ]] ; do
-            barrnap -q --reject $reject -o $rna_file $fa_file
-            iterations=$[ ${iterations} + 1 ]
-        done
-        logt -- Reconstructing $rna_file
-        acc=$( basename $fa_file .fa )
-        species=$( grep $acc ../data/id_species2.csv | cut -d "," -f 2 | sed "s/ /-/g" )
-        sed -E -i "s/:.*/:$acc/g" $rna_file
-        awk '/16S_rRNA/{print;getline;print;}' $rna_file > $rna_16S_file
-        rm $rna_16S_titles
-        count_duplicates=$( cat $rna_16S_file | grep 'EFB' | wc -w )
-        number=$count_duplicates
-        while [[ $number -gt 0 ]] ; do
-            sed -iw "0,/>16S_rRNA:$acc/s//>16SrRNA_$acc-$number\_$species/" $rna_16S_file
-            number=$[ ${number} - 1 ]
-        done
-        cat $rna_16S_file
-        grep "^>" $rna_16S_file | cut -c 2- > $rna_16S_titles
+    
+    logt -- Starting barrnap of $fa_file
+    iterations=0
+    while [[ ! -s $rna_file ]] && [[ $iterations -lt 3 ]] ; do
+        barrnap -q --reject $reject -o $rna_file $fa_file
+        iterations=$[ ${iterations} + 1 ]
+    done
+    logt -- Reconstructing $rna_file
+    id=$( basename $fa_file .fa )
+    if [[ -s ../data/id_species.csv ]] ; then # Looks up species in index if provided
+        species=$( grep $id ../data/id_species.csv | cut -d "," -f 2 | sed "s/ /-/g" )
     fi
+    sed -E -i "s/:.*/:$id/g" $rna_file
+    awk '/16S_rRNA/{print;getline;print;}' $rna_file > $rna_16S_file
+    count_duplicates=$( cat $rna_16S_file | grep 'rRNA' | wc -w )
+    number=$count_duplicates
+    while [[ $number -gt 0 ]] ; do
+        sed -iw "0,/>16S_rRNA:$id/s//>16SrRNA_$id-$number\_$species/" $rna_16S_file
+        number=$[ ${number} - 1 ]
+    done
+    cat $rna_16S_file
+    rm $rna_16S_titles
+    grep "^>" $rna_16S_file | cut -c 2- > $rna_16S_titles
+
     if [[ ! -s $rna_16S_file ]] ; then
         echo WARNING! empty 16S rRNA file $rna_16S_file
         echo '' > $rna_16S_titles
@@ -152,17 +154,18 @@ logt - Concatenating 16S rRNA sequences into one file...
 output_files=$( echo $fa_files | sed "s/.fa/.16S/gi" )
 cat $output_files > $genome_folder/all_16S-$reject.txt
 
-logt - Creating title file (for meta data file)
-title_files=$( echo $fa_files | sed "s/.fa/.title/gi")
-pretty_title=$( cat $title_files | cut -d "_" -f 2,3 | sed "s/_/ /g" )
-cat $title_files > $genome_folder/title_16S-$reject.txt
-echo $pretty_title > $genome_folder/pretty_title_16S-$reject.txt
-rm $title_files
+# Specific code for my dataset
 
+# logt - Creating title file for meta data file
+# title_files=$( echo $fa_files | sed "s/.fa/.title/gi")
+# pretty_title=$( cat $title_files | cut -d "_" -f 2,3 | sed "s/_/ /g" )
+# cat $title_files > $genome_folder/title_16S-$reject.txt
+# echo $pretty_title > $genome_folder/pretty_title_16S-$reject.txt
+# rm $title_files
 
-cat $genome_folder/all_16S-$reject.txt | grep "EFB*" | cut -d "-" -f 1 | uniq -c > $genome_folder/16S_with$reject.log
-count_16S=$( cat $genome_folder/16S_with$reject.log | wc -l )
-logt -- There are $count_16S genomes with at least one 16S rRNA using threshold = $reject
+cat $genome_folder/all_16S-$reject.txt | grep "rRNA*" | cut -d "-" -f 1 | uniq -c > $genome_folder/16S_with_$reject.log
+count_16S=$( cat $genome_folder/16S_with_$reject.log | wc -l )
+logt - There are $count_16S genomes with at least one 16S rRNA using threshold = $reject
 
 time_end="$(date +%s)"
 time_used=$[ ${time_end} - ${time_start} ]
