@@ -155,13 +155,12 @@ output_files=$( echo $fa_files | sed "s/.fa/.16S/gi" )
 cat $output_files > $genome_folder/all_16S-$reject.txt
 
 # Specific code for my dataset
-
 # logt - Creating title file for meta data file
-# title_files=$( echo $fa_files | sed "s/.fa/.title/gi")
+title_files=$( echo $fa_files | sed "s/.fa/.title/gi")
 # pretty_title=$( cat $title_files | cut -d "_" -f 2,3 | sed "s/_/ /g" )
 # cat $title_files > $genome_folder/title_16S-$reject.txt
 # echo $pretty_title > $genome_folder/pretty_title_16S-$reject.txt
-# rm $title_files
+rm $title_files
 
 cat $genome_folder/all_16S-$reject.txt | grep "rRNA*" | cut -d "-" -f 1 | uniq -c > $genome_folder/16S_with_$reject.log
 count_16S=$( cat $genome_folder/16S_with_$reject.log | wc -l )
